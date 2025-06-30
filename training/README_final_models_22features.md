@@ -52,13 +52,7 @@ pip install pandas numpy scikit-learn xgboost joblib matplotlib
 python final_models_22features_english.py
 ```
 
-Make sure the data files referenced in the script are available in the specified paths.
-
 ## Authors
 
-- [Your Name or Lab]
-- Originally written in Chinese, translated and restructured for GitHub sharing.
+- The Zhang Lab of Population Genetics, University of Michigan
 
-## License
-
-MIT License (or specify your own)
