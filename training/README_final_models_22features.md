@@ -5,7 +5,7 @@ This repository contains a Python script that trains and evaluates machine learn
 
 ## Script Overview
 
-### Script: `final_models_22features_english.py`
+### Script: `final_models_22features.py`
 
 This script is organized into the following sections:
 
