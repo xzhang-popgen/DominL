@@ -46,6 +46,14 @@ bioRxiv doi: [10.1101/2025.05.07.652751](https://www.biorxiv.org/content/10.1101
 
 ---
 
+## Data availability
+
+**Google Drive supplementary data:** Training data used in DominL training, and empirical predictions on 7 1000 Genomes populations can be found:
+
+https://drive.google.com/drive/u/2/folders/1sOg0dvZ4KUqurTOFA8gsKldPEJiKBEf8
+
+---
+
 ## Requirements
 
 ```
@@ -95,6 +103,87 @@ export TEST_DATA=/path/to/test_data_all.xlsx
 export EMPIRICAL_DATA=/path/to/hg19_CHB_empirical-stats_all.txt
 ./run_pipeline.sh
 ```
+
+---
+
+## Reproducibility: file structure, data format, and workflow
+
+### File structure and data dependencies
+
+| Component | Purpose | Data dependencies |
+|-----------|---------|-------------------|
+| `slim/` | Generate simulation stats | Segment files in `1kseg_byexon/`; outputs stats CSVs |
+| `training/` | Train XGBoost model | `train_data.xlsx`, `test_data.xlsx` (or from simulations) |
+| `empirical_prediction/` | Apply model to empirical data | Trained model + empirical stats (1KG, HGDP, etc.) |
+| `config/features.py` | Feature names, column mapping | Edit `EMPIRICAL_COLUMN_MAPPING` for new datasets |
+
+Pre-computed training data and empirical predictions are available on [Google Drive](#data-availability).
+
+### Workflow overview
+
+```
+Simulations (slim/)  →  Training (training/)  →  Empirical prediction (empirical_prediction/)
+         │                      │                              │
+         │                      │                              │
+   stat CSVs per window    train_data.xlsx              empirical_stats.txt
+   (or use Google Drive)   test_data.xlsx               (1KG, HGDP, etc.)
+```
+
+1. **Simulations:** Run SLiM to generate synthetic data; `sim2vcf2stats.py` extracts per-window stats.
+2. **Training:** Train XGBoost on simulation stats with labels (0=additive, 1=recessive).
+3. **Empirical prediction:** Apply the trained model to empirical summary statistics from any population.
+
+### Input format for training
+
+Training and test files (CSV or Excel) must include:
+
+| Column | Description |
+|--------|-------------|
+| `dominance` | 0 = additive, 1 = recessive (2 = partial, if using 3-class) |
+| Plus all 22 feature columns (see below) | Per 1MB window |
+
+**Required 22 features:** `exon_density`, `mean_introg_anc`, `exon_window`, `introg_anc_window`, `divergence_p3_p1`, `divergence_p3_p2`, `watterson_theta_p3`, `windowed_tajima_d_p3`, `D`, `Het`, `Q95`, `U0`, `U20`, `U50`, `U80`, `num_seg_p1`, `num_seg_p3`, `num_private_seg_p1`, `num_private_seg_p2`, `num_private_seg_p3`, `mean_recrate`, `recrate_window`
+
+Optional metadata columns (`segment`, `rep`, `start`, `end`, `patterson_f3`) are dropped automatically.
+
+### Input format for empirical prediction
+
+Empirical data (e.g., from 1000 Genomes or HGDP) must have summary statistics per 1MB window. Column names can differ; the pipeline maps them via `config/features.py`:
+
+| If your file has | It maps to |
+|------------------|------------|
+| `nea_anc` | `introg_anc_window` |
+| `exon_5mb` | `exon_density` |
+| `exon` | `exon_window` |
+| `nea_anc_5mb` | `mean_introg_anc` |
+| `recomb_5mb` | `mean_recrate` |
+| `recomb` | `recrate_window` |
+
+Other features must match the 22 names exactly. Add mappings in `EMPIRICAL_COLUMN_MAPPING` in `config/features.py` for new column names.
+
+### Training on a new dataset (e.g., HGDP)
+
+To train DominL on a different dataset:
+
+1. **Prepare summary statistics** per 1MB window for your populations:
+   - Neanderthal introgression ancestry (`introg_anc_window`, `mean_introg_anc`)
+   - Exon counts (`exon_window`, `exon_density`)
+   - Recombination (`mean_recrate`, `recrate_window`)
+   - D, fD, diversity, divergence, etc. (see `SELECTED_FEATURES_22` in `config/features.py`)
+
+2. **Add labels:** For simulation-based training, labels come from the simulation (additive vs recessive). For empirical-only applications, use the pre-trained model from our training data.
+
+3. **Organize inputs:** One CSV/Excel file per split (e.g., `train_HGDP.csv`, `test_HGDP.csv`) with columns: `dominance` plus the 22 features.
+
+4. **Run training:**
+   ```bash
+   python training/train_xgboost.py --train train_HGDP.csv --test test_HGDP.csv --output models_hgdp --features 22
+   ```
+
+5. **Run empirical prediction** on new populations:
+   ```bash
+   python empirical_prediction/predict_empirical.py --empirical hgdp_pop_stats.txt --model-dir models_hgdp --output predictions/HGDP_pop.csv
+   ```
 
 ---
 
