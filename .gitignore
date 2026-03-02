@@ -1,0 +1,33 @@
+# Generated outputs
+models/
+predictions/
+slim/stat_1kseg_byexon/*.csv
+*.trees
+*.vcf
+*_combined.vcf
+*_ns.vcf
+*_syn.vcf
+*_noncoding.vcf
+*_unsorted.vcf
+*_ns_selcoeff.out
+rep*_model*Gravel_Eurasian_varyh.slim
+rep*_model*Gravel_Eurasian_varyh.slim.output
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+.Python
+venv/
+env/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
