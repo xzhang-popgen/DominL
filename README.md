@@ -134,3 +134,7 @@ See `slim/README.md` for details.
 
 **analysis_functions/analysis_functions.py** provides runnable implementations of these functions for reproducibility.
 
+---
+## Google Drive Supplementary Data
+
+- Training data used in DominL training, and empirical predictions on 7 1KG populations can be found: https://drive.google.com/drive/u/2/folders/1sOg0dvZ4KUqurTOFA8gsKldPEJiKBEf8
